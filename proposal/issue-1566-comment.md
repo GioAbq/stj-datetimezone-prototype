@@ -1,6 +1,6 @@
 @jeffhandley Here is a revised proposal covering this thread and the scenario from #122962.
 
-Everything below was measured on .NET 10.0.12 (SDK 10.0.401), Windows, with the machine time zone at UTC+02:00. The prototype that produced the "proposed" rows, its 84 tests and the benchmark are described at the end.
+Everything below was measured on .NET 10.0.12 (SDK 10.0.401), Windows, with the machine time zone at UTC+02:00. The prototype that produced the "proposed" rows, its 84 tests and the benchmark are linked at the end.
 
 ## Background and motivation
 
@@ -157,7 +157,7 @@ Searching the VMR for `JsonConverter<DateTime>` and `JsonConverter<DateTimeOffse
 
 ## Prototype
 
-The semantics, the parity with Newtonsoft.Json 13.0.4, the workaround defects, the `SYSLIB1220` result and the benchmark above all come from a prototype outside the repo (converters implementing the proposed semantics, 84 tests, BenchmarkDotNet). Happy to move it to a branch on a fork of dotnet/runtime, with `GenerateReferenceAssemblySource` output and the tests moved into `System.Text.Json.Tests`, if the shape above looks worth pursuing.
+The semantics, the parity with Newtonsoft.Json 13.0.4, the workaround defects, the `SYSLIB1220` result and the benchmark above all come from a prototype outside the repo: https://github.com/GioAbq/stj-datetimezone-prototype (converters implementing the proposed semantics, 84 tests against Newtonsoft.Json 13.0.4 and the built-in behavior, BenchmarkDotNet; the tables above are its `docs/current-behavior.md`). Happy to move it to a branch on a fork of dotnet/runtime, with `GenerateReferenceAssemblySource` output and the tests moved into `System.Text.Json.Tests`, if the shape above looks worth pursuing.
 
 > [!NOTE]
 > This comment was drafted with AI assistance (Claude Code). The measurements, prototype and test results it cites were produced by running the code described above.
