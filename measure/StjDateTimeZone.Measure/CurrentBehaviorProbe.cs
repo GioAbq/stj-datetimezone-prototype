@@ -101,6 +101,7 @@ public static class CurrentBehaviorProbe
 
     public static ProbeSection ThreadWorkarounds()
     {
+        JsonSerializerOptions mpashkovskiy = WithConverter(new MpashkovskiyUtcConverter());
         JsonSerializerOptions dalle = WithConverter(new DalleUtcConverter());
         JsonSerializerOptions specifyKind = WithConverter(new SpecifyKindUtcConverter());
         JsonSerializerOptions jgador = WithConverter(new JgadorUtcConverter());
@@ -108,12 +109,14 @@ public static class CurrentBehaviorProbe
         return new(
             "custom converters posted in dotnet/runtime#1566",
             [
+                new("@mpashkovskiy converter", s => StjSerializer.Deserialize<DateTime>(ProbeInputs.Quote(s), mpashkovskiy)),
                 new("@dalle converter", s => StjSerializer.Deserialize<DateTime>(ProbeInputs.Quote(s), dalle)),
                 new("@dalle converter, Dictionary<DateTime, int> key", s => StjSerializer.Deserialize<Dictionary<DateTime, int>>(DictionaryJson(s), dalle)!.Keys.Single()),
                 new("@amay5027 converter", s => StjSerializer.Deserialize<DateTime>(ProbeInputs.Quote(s), specifyKind)),
                 new("@jgador converter", s => StjSerializer.Deserialize<DateTime>(ProbeInputs.Quote(s), jgador)),
             ],
             [
+                new("@mpashkovskiy converter", v => Unquote(StjSerializer.Serialize(v, mpashkovskiy))),
                 new("@dalle converter", v => Unquote(StjSerializer.Serialize(v, dalle))),
                 new("@dalle converter, Dictionary<DateTime, int> key", v => FirstKey(StjSerializer.Serialize(new Dictionary<DateTime, int> { [v] = 1 }, dalle))),
                 new("@amay5027 converter", v => Unquote(StjSerializer.Serialize(v, specifyKind))),

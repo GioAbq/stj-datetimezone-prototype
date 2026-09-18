@@ -1,6 +1,6 @@
 @jeffhandley Here is a revised proposal covering this thread and the scenario from #122962.
 
-Everything below was measured on .NET 10.0.12 (SDK 10.0.401), Windows, with the machine time zone at UTC+02:00. The prototype that produced the "proposed" rows, its 84 tests and the benchmark are linked at the end.
+Everything below was measured on .NET 10.0.12 (SDK 10.0.401), Windows, with the machine time zone at UTC+02:00. The prototype that produced the "proposed" rows, its 91 tests and the benchmark are linked at the end.
 
 ## Background and motivation
 
@@ -29,33 +29,22 @@ The last row of the first table is why "use `DateTimeOffset` instead" does not a
 
 ### The workarounds in this thread do not hold
 
-Measured with the converters exactly as posted:
+Measured with the converters as posted (for @jgador, whose comment supplies only a `Read`, the write side is @dalle's):
 
 | Converter | Measured defect |
 |---|---|
+| [@mpashkovskiy](https://github.com/dotnet/runtime/issues/1566#issuecomment-636452511) `DateTime.Parse` + `ToUniversalTime().ToString("...ss'Z'")` | Reading `...Z` yields `14:00` `Local`; writing an `Unspecified` value shifts it to `10:00Z`; the format drops the fractional second, so `12:00:00.123Z` goes out as `12:00:00Z`. |
 | [@dalle](https://github.com/dotnet/runtime/issues/1566#issuecomment-745201271) `reader.GetDateTime().ToUniversalTime()` | Offset-less input is shifted by the machine offset: `12:00` becomes `10:00Z`. Writing an `Unspecified` value shifts it too. |
 | [@amay5027](https://github.com/dotnet/runtime/issues/1566#issuecomment-833331501) `DateTime.Parse` + `SpecifyKind` | Reading `...Z` yields `14:00` `Local`; writing a `Local` value publishes `12:00:00Z` for an instant that is `10:00Z`. |
 | [@jgador](https://github.com/dotnet/runtime/issues/1566#issuecomment-2408664669) `SpecifyKind` unless already UTC | Offset-bearing input yields the wrong instant: `12:00-05:00` becomes `19:00Z` instead of `17:00Z`. |
 
-Two of these are among the most upvoted comments in the thread (30 and 13 reactions), and the third was posted as a correction to the first. Each is wrong in a different case. Seven years of people copying them is the strongest argument for putting the policy in the box.
+The first three are the most upvoted answers in the thread (35, 30 and 11 upvotes); the fourth was posted as a correction to the second, and the second and third both say they extend the first. Each is wrong in a different case. Seven years of people copying them is the strongest argument for putting the policy in the box.
 
 ### Three gaps a user-supplied converter cannot close
 
-- **Dictionary keys.** A converter that does not override `ReadAsPropertyName`/`WriteAsPropertyName` silently falls back to the built-in converter for `Dictionary<DateTime, T>` keys, so the normalization does not happen. When it does override them, `Utf8JsonReader.GetDateTime()` throws on a `PropertyName` token and `Utf8JsonWriter.WritePropertyName(DateTime)` is `internal`, so the key has to be materialized as a string, re-parsed with `DateTime.Parse` and re-formatted by hand to match the trimmed ISO 8601 shape.
+- **Dictionary keys.** A converter that does not override `ReadAsPropertyName`/`WriteAsPropertyName` silently falls back to the built-in converter for `Dictionary<DateTime, T>` keys, so the normalization does not happen. When it does override them, `Utf8JsonReader.GetDateTime()` throws on a `PropertyName` token and `Utf8JsonWriter.WritePropertyName(DateTime)` is `internal`, so the key has to be materialized as a string, re-parsed with `DateTime.Parse` and re-formatted by hand to match the trimmed ISO 8601 shape. That hand-written key then goes through `WritePropertyName(string)` and the configured encoder, which escapes it: the built-in writer emits `2024-06-01T12:00:00+02:00` while a converter emits `2024-06-01T12:00:00+02:00` for the same value.
 - **`JsonNode`.** `JsonValue.Create(dateTime).WriteTo(writer, options)` writes through the converter captured when the node was created, so `options.Converters` never reaches it. An option read by the built-in converter would.
-- **Cost.** The conversion, not the converter dispatch, is what costs (BenchmarkDotNet, ShortRun job, .NET 10.0.12, single machine, offset-less input / `Unspecified` value; the read and write blocks each use their own built-in baseline):
-
-| Case | Mean | Ratio |
-|---|---|---|
-| Read, built-in | 38.9 ns | 1.00 |
-| Read, proposed option at its default | 39.3 ns | 1.01 |
-| Read, proposed option set to `Utc` | 40.7 ns | 1.05 |
-| Read, @dalle converter | 74.0 ns | 1.90 |
-| Write, built-in | 55.4 ns | 1.00 |
-| Write, proposed option set to `Utc` | 55.7 ns | 1.01 |
-| Write, @dalle converter | 92.6 ns | 1.67 |
-
-The workaround pays for a time-zone conversion on every value. The proposed semantics do not need one for the case #122962 describes, because "this offset-less text is already UTC" is a `SpecifyKind`, not a conversion. For `Kind=Local` values any implementation pays the same zone lookup.
+- **Cost.** The converter dispatch is not what costs; the time-zone conversion is. Across three BenchmarkDotNet runs (.NET 10.0.12, one developer machine I could not quiet down - StdDev reaches 25% of the mean), the copied converter consistently costs 1.8-2.3x the built-in path on read and 1.3-2.2x on write, because it calls `ToUniversalTime()` on every value. The difference between the built-in path and the proposed option landed inside that noise in every run, so I am not putting a number on it. What is structural rather than measured: "this offset-less text is already UTC" is a `DateTime.SpecifyKind`, not a conversion, so the option needs no zone lookup in the scenario #122962 describes, while the workaround pays for one. For `Kind=Local` values every implementation pays it. Raw output, both job sizes: [docs/benchmark.md](https://github.com/GioAbq/stj-datetimezone-prototype/blob/main/docs/benchmark.md).
 
 ## API Proposal
 
@@ -157,7 +146,7 @@ Searching the VMR for `JsonConverter<DateTime>` and `JsonConverter<DateTimeOffse
 
 ## Prototype
 
-The semantics, the parity with Newtonsoft.Json 13.0.4, the workaround defects, the `SYSLIB1220` result and the benchmark above all come from a prototype outside the repo: https://github.com/GioAbq/stj-datetimezone-prototype (converters implementing the proposed semantics, 84 tests against Newtonsoft.Json 13.0.4 and the built-in behavior, BenchmarkDotNet; the tables above are its `docs/current-behavior.md`). Happy to move it to a branch on a fork of dotnet/runtime, with `GenerateReferenceAssemblySource` output and the tests moved into `System.Text.Json.Tests`, if the shape above looks worth pursuing.
+The semantics, the parity with Newtonsoft.Json 13.0.4, the workaround defects, the `SYSLIB1220` result and the benchmark above all come from a prototype outside the repo: https://github.com/GioAbq/stj-datetimezone-prototype (converters implementing the proposed semantics, 91 tests against Newtonsoft.Json 13.0.4 and the built-in behavior, BenchmarkDotNet; the tables above are its `docs/current-behavior.md`). Happy to move it to a branch on a fork of dotnet/runtime, with `GenerateReferenceAssemblySource` output and the tests moved into `System.Text.Json.Tests`, if the shape above looks worth pursuing.
 
 > [!NOTE]
 > This comment was drafted with AI assistance (Claude Code). The measurements, prototype and test results it cites were produced by running the code described above.

@@ -66,6 +66,7 @@ Output of `dotnet run --project measure/StjDateTimeZone.Measure -c Release`. Eve
 
 | API | `2024-06-01T12:00:00Z` | `2024-06-01T12:00:00-05:00` | `2024-06-01T12:00:00` |
 |---|---|---|---|
+| @mpashkovskiy converter | `2024-06-01T14:00` Local | `2024-06-01T19:00` Local | `2024-06-01T12:00` Unspecified |
 | @dalle converter | `2024-06-01T12:00` Utc | `2024-06-01T17:00` Utc | `2024-06-01T10:00` Utc |
 | @dalle converter, Dictionary<DateTime, int> key | `2024-06-01T12:00` Utc | `2024-06-01T19:00` Local | `2024-06-01T12:00` Unspecified |
 | @amay5027 converter | `2024-06-01T14:00` Local | `2024-06-01T19:00` Local | `2024-06-01T12:00` Unspecified |
@@ -75,6 +76,7 @@ Output of `dotnet run --project measure/StjDateTimeZone.Measure -c Release`. Eve
 
 | API | Kind=Utc | Kind=Local | Kind=Unspecified |
 |---|---|---|---|
+| @mpashkovskiy converter | `2024-06-01T12:00:00Z` | `2024-06-01T10:00:00Z` | `2024-06-01T10:00:00Z` |
 | @dalle converter | `2024-06-01T12:00:00Z` | `2024-06-01T10:00:00Z` | `2024-06-01T10:00:00Z` |
 | @dalle converter, Dictionary<DateTime, int> key | `2024-06-01T12:00:00Z` | `2024-06-01T12:00:00+02:00` | `2024-06-01T12:00:00` |
 | @amay5027 converter | `2024-06-01T12:00:00Z` | `2024-06-01T12:00:00Z` | `2024-06-01T12:00:00Z` |

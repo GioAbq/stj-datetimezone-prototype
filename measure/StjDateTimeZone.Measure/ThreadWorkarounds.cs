@@ -7,6 +7,16 @@ namespace StjDateTimeZone.Measure;
 
 // Converters copied from the dotnet/runtime#1566 thread, kept verbatim in behavior to measure what users run today.
 
+/// <summary>dotnet/runtime#1566 comment by @mpashkovskiy (2020-05-31, 35 upvotes) - the root the others extend.</summary>
+public sealed class MpashkovskiyUtcConverter : JsonConverter<DateTime>
+{
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => DateTime.Parse(reader.GetString()!, CultureInfo.CurrentCulture);
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        => writer.WriteStringValue(value.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ", CultureInfo.CurrentCulture));
+}
+
 /// <summary>dotnet/runtime#1566 comment by @dalle (2020-12-15, 30 upvotes).</summary>
 public sealed class DalleUtcConverter : JsonConverter<DateTime>
 {

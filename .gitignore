@@ -5,3 +5,4 @@ logs/
 *.user
 .vs/
 .idea/
+TestResults/

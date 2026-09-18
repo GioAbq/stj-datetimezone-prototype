@@ -130,6 +130,56 @@ public sealed class ConverterSemanticsTests
         JsonSerializer.Deserialize<DateTimeOffset>(UtcText, options).ShouldBe(new DateTimeOffset(2024, 6, 1, 12, 0, 0, TimeSpan.Zero));
     }
 
+    [Theory]
+    [InlineData("2024-06-01T12:00:00Z")]
+    [InlineData("2024-06-01T12:00:00-05:00")]
+    [InlineData("2024-06-01T12:00:00.1234567+05:30")]
+    public void DateTimeOffset_DictionaryKeysWithAnOffset_KeepThatOffsetInEveryMode(string key)
+    {
+        string json = "{\"" + key + "\":1}";
+        DateTimeOffset builtIn = JsonSerializer.Deserialize<Dictionary<DateTimeOffset, int>>(json)!.Keys.Single();
+
+        foreach (JsonDateTimeZoneHandling handling in Enum.GetValues<JsonDateTimeZoneHandling>())
+        {
+            DateTimeOffset actual = JsonSerializer.Deserialize<Dictionary<DateTimeOffset, int>>(json, Options(handling))!.Keys.Single();
+            actual.ShouldBe(builtIn);
+            actual.Offset.ShouldBe(builtIn.Offset);
+        }
+    }
+
+    [Fact]
+    public void DictionaryKeys_WrittenByAConverter_AreEscapedDifferentlyThanTheBuiltInWriter()
+    {
+        // The built-in key writer emits the ISO text as raw bytes. A converter can only reach
+        // WritePropertyName(string), which runs through the configured JavaScriptEncoder - and the default
+        // encoder escapes '+'. Same value, different JSON.
+        DateTimeOffset value = new(2024, 6, 1, 12, 0, 0, TimeSpan.FromHours(2));
+        Dictionary<DateTimeOffset, int> map = new() { [value] = 1 };
+
+        JsonSerializer.Serialize(map).ShouldBe("{\"2024-06-01T12:00:00+02:00\":1}");
+        JsonSerializer.Serialize(map, Options(JsonDateTimeZoneHandling.RoundtripKind))
+            .ShouldBe("{\"2024-06-01T12:00:00\\u002B02:00\":1}");
+
+        DateTime localValue = new(2024, 6, 1, 12, 0, 0, DateTimeKind.Local);
+        if (TimeZoneInfo.Local.GetUtcOffset(localValue) > TimeSpan.Zero)
+        {
+            JsonSerializer.Serialize(new Dictionary<DateTime, int> { [localValue] = 1 }, Options(JsonDateTimeZoneHandling.RoundtripKind))
+                .ShouldContain("\\u002B");
+            JsonSerializer.Serialize(new Dictionary<DateTime, int> { [localValue] = 1 }).ShouldNotContain("\\u002B");
+        }
+    }
+
+    [Fact]
+    public void DateTimeOffset_OffsetLessDictionaryKey_FollowsTheOption()
+    {
+        const string json = "{\"2024-06-01T12:00:00\":1}";
+
+        JsonSerializer.Deserialize<Dictionary<DateTimeOffset, int>>(json, Options(JsonDateTimeZoneHandling.Utc))!.Keys.Single()
+            .ShouldBe(new DateTimeOffset(2024, 6, 1, 12, 0, 0, TimeSpan.Zero));
+        JsonSerializer.Deserialize<Dictionary<DateTimeOffset, int>>(json, Options(JsonDateTimeZoneHandling.RoundtripKind))!.Keys.Single()
+            .ShouldBe(JsonSerializer.Deserialize<Dictionary<DateTimeOffset, int>>(json)!.Keys.Single());
+    }
+
     [Fact]
     public void DateTimeOffset_WriteIsNeverChanged()
     {

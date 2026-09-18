@@ -85,6 +85,31 @@ public sealed class CurrentBehaviorProbeTests
     }
 
     [Fact]
+    public void MpashkovskiyWorkaround_DropsSubSecondPrecisionAndAssumesLocalForOffsetLessInput()
+    {
+        ProbeSection section = CurrentBehaviorProbe.ThreadWorkarounds();
+
+        // Reading "...Z" through DateTime.Parse hands back machine-local time, not UTC.
+        ShouldBeLocalInstant(Single(section.Reads, "@mpashkovskiy converter").Read(ProbeInputs.Utc), new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc));
+
+        // Writing an Unspecified value treats it as local time and shifts it.
+        WriteProbe write = Single(section.Writes, "@mpashkovskiy converter");
+        write.Write(ProbeInputs.Value(DateTimeKind.Unspecified))
+            .ShouldBe(DateTime.SpecifyKind(Noon, DateTimeKind.Local).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture) + "Z");
+    }
+
+    [Fact]
+    public void MpashkovskiyWorkaround_LosesTheFractionalSecond()
+    {
+        WriteProbe write = Single(CurrentBehaviorProbe.ThreadWorkarounds().Writes, "@mpashkovskiy converter");
+
+        string written = write.Write(new DateTime(2024, 6, 1, 12, 0, 0, 123, DateTimeKind.Utc));
+
+        written.ShouldBe("2024-06-01T12:00:00Z");
+        written.ShouldNotContain(".123");
+    }
+
+    [Fact]
     public void DalleWorkaround_ShiftsOffsetLessInputByMachineOffset()
     {
         ReadProbe probe = Single(CurrentBehaviorProbe.ThreadWorkarounds().Reads, "@dalle converter");

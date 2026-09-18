@@ -37,10 +37,14 @@ public sealed class DateTimeOffsetZoneHandlingConverter : JsonConverter<DateTime
 
     public override DateTimeOffset ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        DateTime asDateTime = DateTimeZoneHandlingConverter.ParsePropertyName(ref reader);
+        // The key has to be parsed twice: once as DateTime to learn whether the text carried an offset at
+        // all, and then as DateTimeOffset, because DateTime.Parse converts an offset to machine-local time
+        // and the original offset would be lost.
+        string text = reader.GetString()!;
+        DateTime asDateTime = DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
         return asDateTime.Kind == DateTimeKind.Unspecified
             ? _normalizer.AssumeOffset(asDateTime)
-            : new DateTimeOffset(asDateTime);
+            : DateTimeOffset.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
     }
 
     public override void WriteAsPropertyName(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
