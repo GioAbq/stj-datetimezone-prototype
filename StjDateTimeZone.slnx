@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/bench/">
+    <Project Path="bench/StjDateTimeZone.Bench/StjDateTimeZone.Bench.csproj" />
+  </Folder>
+  <Folder Name="/measure/">
+    <Project Path="measure/StjDateTimeZone.Measure/StjDateTimeZone.Measure.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/StjDateTimeZone/StjDateTimeZone.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/StjDateTimeZone.Tests/StjDateTimeZone.Tests.csproj" />
+  </Folder>
+</Solution>

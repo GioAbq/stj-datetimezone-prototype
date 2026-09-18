@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(TargetFrameworkId)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../bench/StjDateTimeZone.Bench/StjDateTimeZone.Bench.csproj" />
+    <ProjectReference Include="../../measure/StjDateTimeZone.Measure/StjDateTimeZone.Measure.csproj" />
+    <ProjectReference Include="../../src/StjDateTimeZone/StjDateTimeZone.csproj" />
+  </ItemGroup>
+
+</Project>

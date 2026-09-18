@@ -1,0 +1,14 @@
+<!-- Builds with warning SYSLIB1220 on purpose: that warning is the experiment. Kept out of StjDateTimeZone.slnx. -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(TargetFrameworkId)</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\StjDateTimeZone\StjDateTimeZone.csproj" />
+  </ItemGroup>
+
+</Project>
