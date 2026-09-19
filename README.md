@@ -24,7 +24,7 @@ The proposal text itself is in [`proposal/issue-1566-comment.md`](proposal/issue
 |---|---|
 | `src/StjDateTimeZone` | the proposed enum, the normalization rule and the two converters |
 | `measure/StjDateTimeZone.Measure` | console app that prints the behavior tables used in the proposal |
-| `test/StjDateTimeZone.Tests` | 91 tests: current behavior, proposed semantics, Newtonsoft parity, reader/writer limits |
+| `test/StjDateTimeZone.Tests` | 94 tests: current behavior, proposed semantics, Newtonsoft parity, reader/writer limits |
 | `bench/StjDateTimeZone.Bench` | BenchmarkDotNet comparison of built-in, workaround and proposed paths |
 | `experiments/sourcegen-converter-ctor` | deliberately warns: the "just ship a converter" alternative, tried |
 

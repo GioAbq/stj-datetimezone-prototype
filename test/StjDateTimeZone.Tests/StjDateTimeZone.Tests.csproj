@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../bench/StjDateTimeZone.Bench/StjDateTimeZone.Bench.csproj" />
+    <ProjectReference Include="../../experiments/sourcegen-converter-ctor/SourceGenConverterCtor.csproj" />
     <ProjectReference Include="../../measure/StjDateTimeZone.Measure/StjDateTimeZone.Measure.csproj" />
     <ProjectReference Include="../../src/StjDateTimeZone/StjDateTimeZone.csproj" />
   </ItemGroup>

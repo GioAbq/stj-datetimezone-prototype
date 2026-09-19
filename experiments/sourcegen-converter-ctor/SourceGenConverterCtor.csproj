@@ -1,4 +1,4 @@
-<!-- Builds with warning SYSLIB1220 on purpose: that warning is the experiment. Kept out of StjDateTimeZone.slnx. -->
+<!-- Builds with warning SYSLIB1220 on purpose: that warning is the experiment, and the tests pin its consequence. -->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>

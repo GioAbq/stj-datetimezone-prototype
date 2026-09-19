@@ -6,6 +6,7 @@ using Xunit;
 
 namespace StjDateTimeZone.Tests.Measure;
 
+[Collection(ConsoleCollection.Name)]
 public sealed class ProgramTests
 {
     [Fact]
